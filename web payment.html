@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAIREL/HeIz-PAYMENT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .loading-text {
+            font-size: 2rem;
+            color: #ffff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ff0000;
+            font-weight: bold;
+        }
+        
+        .loading-subtext {
+            font-size: 1.2rem;
+            color: #ff0000;
+            margin-bottom: 15px;
+        }
+        
+        .progress-container {
+            width: 80%;
+            max-width: 400px;
+            height: 30px;
+            background-color: #000000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px #ff0000;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #000000, #ffff);
+            transition: width 0.1s linear;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* Main Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: url('https://files.catbox.moe/kl2072.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ff0000;
+            font-size: 2.5rem;
+            text-shadow: 0 2px 5px rgba(255, 255, 255, 1);
+            font-weight: 800;
+        }
+        
+        .payment-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .qris-container {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .qris-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #fff;
+            font-weight: 800;
+            text-shadow: 0 2px 5px #ff0000;
+        }
+        
+        .qris-img {
+            max-width: 300px;
+            border-radius: 15px;
+            border: 3px solid #ff0000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .qris-img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px #ff0000;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        
+        .zoom-btn {
+            background: linear-gradient(135deg, #ff0000, #000000);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .zoom-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px #ff0000;
+        }
+        
+        .zoom-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .payment-methods {
+            width: 100%;
+            margin-top: 30px;
+        }
+        
+        .payment-method {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-left: 5px solid transparent;
+        }
+        
+        .payment-method:hover {
+            background: rgba(255, 0, 0, 0.2);
+            transform: translateX(5px);
+            border-left: 5px solid #ff0000;
+        }
+        
+        .method-info {
+            flex: 1;
+        }
+        
+        .method-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .method-number {
+            font-size: 1rem;
+            color: #ddd;
+            word-break: break-all;
+        }
+        
+        .method-owner {
+            font-size: 0.9rem;
+            color: #bbb;
+            margin-top: 5px;
+        }
+        
+        .copy-btn {
+            background: linear-gradient(135deg, #ff0000, #000000);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-left: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .copy-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(45deg);
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+        
+        .copy-btn:hover::before {
+            left: 100%;
+        }
+        
+        .copy-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(255, 0, 0, 0.3);
+        }
+        
+        .copy-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .contact-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 250px;
+        }
+        
+        .contact-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            width: 100%;
+        }
+        
+        .whatsapp-btn {
+            background: linear-gradient(135deg, #25D366, #000000);
+        }
+        
+        .telegram-btn {
+            background: linear-gradient(135deg, #0088cc, #000000);
+        }
+        
+        .tiktok-btn {
+            background: linear-gradient(135deg, black, grey);
+        }
+        
+        .youtube-btn {
+            background: linear-gradient(135deg, #ff0000, #000000);
+        }
+        
+        .telegramm-btn {
+            background: linear-gradient(135deg, #0088cc, #000000);
+        }
+        
+        .contact-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .contact-btn:active {
+            transform: translateY(2px);
+        }
+        
+        .contact-btn img {
+            width: 30px;
+            margin-right: 10px;
+        }
+        
+        .gallery-btn {
+            background: linear-gradient(135deg, #0000ff, #8b0000);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+        
+        .gallery-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(255, 0, 0, 0.3);
+        }
+        
+        .gallery-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .gallery {
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .gallery.active {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .gallery-item {
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .gallery-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.4);
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        .modal-content img {
+            width: 100%;
+            height: auto;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-modal:hover {
+            color: #ff9784;
+            transform: rotate(90deg);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            z-index: 1001;
+            transform: translateX(200%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .payment-method {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .copy-btn {
+                margin-left: 0;
+                margin-top: 10px;
+                width: 100%;
+            }
+            
+            .zoom-controls {
+                flex-wrap: wrap;
+            }
+            
+            .zoom-btn {
+                flex: 1;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-text">𝐏𝐀𝐘𝐌𝐄𝐍𝐓 FAIREL/HeIz</div>
+        <div class="loading-subtext">Loading...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar">0%</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>PAYMENT FAIREL/HeIz</h1>
+        
+        <div class="payment-section">
+            <div class="qris-title"></div>
+            <div class="qris-container">
+                <img src="https://files.catbox.moe/jvhlq6.jpg" alt="QRIS Payment" class="qris-img" id="qris-img">
+                <div class="zoom-controls">
+                    <button class="zoom-btn" id="zoom-in">zoom(+)</button>
+                    <button class="zoom-btn" id="zoom-out">zoom (-)</button>
+                    <button class="zoom-btn" id="reset-zoom">Reset</button>
+                </div>
+            </div>
+            
+            <button class="gallery-btn" id="gallery-btn">Show QR Gallery</button>
+            
+            <div class="gallery" id="gallery">
+                <div class="gallery-item">
+                    <img src="https://files.catbox.moe/wh5i1u.jpg" alt="QRIS Payment">
+                </div>
+                <!-- Add more gallery items if needed -->
+            </div>
+        </div>
+        
+        <div class="payment-methods">
+            <div class="payment-method">
+                <div class="method-info">
+                    <div class="method-name">DANA</div>
+                    <div class="method-number" id="dana-number"></div>
+                    <div class="method-owner">08811964920</div>
+                </div>
+                <button class="copy-btn" data-target="dana-number">Copy</button>
+            </div>
+        </div>
+        
+        <div class="contact-buttons">
+            <a href="https://wa.me/628811964920" class="contact-btn whatsapp-btn" target="_blank">
+                <img src="https://files.catbox.moe/uk6b2j.jpg" alt="WhatsApp">
+                WhatsApp
+            </a>
+            
+            <a href="https://t.me/HeIz_FZ" class="contact-btn telegram-btn" target="_blank">
+                <img src="https://img1.pixhost.to/images/7425/625267684_image.jpg" alt="Telegram">
+                Telegram
+            </a>
+            
+             <a href="https://www.tiktok.com/@fairelstore?_r=1&_t=ZS-93Ht0uXLSRk" class="contact-btn tiktok-btn" target="_blank">
+                <img src="https://files.catbox.moe/wxw06p.jpg" alt="Tiktok">
+                Tiktok
+   
+   
+        </div>
+    </div>
+    
+    <!-- Modal for enlarged image -->
+    <div class="modal" id="image-modal">
+        <span class="close-modal">&times;</span>
+        <div class="modal-content">
+            <img id="modal-image" src="" alt="Enlarged Image">
+        </div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        Berhasil Di Salin
+    </div>
+    
+    <script>
+        // Loading screen with progress bar
+        const progressBar = document.getElementById('progress-bar');
+        const loadingScreen = document.getElementById('loading-screen');
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 1;
+            progressBar.style.width = progress + '%';
+            progressBar.textContent = progress + '%';
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }
+        }, 30); // Adjust speed here (lower number = faster)
+        
+        // Zoom functionality for QRIS
+        const qrisImg = document.getElementById('qris-img');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const resetZoomBtn = document.getElementById('reset-zoom');
+        
+        let currentScale = 1;
+        const scaleStep = 0.1;
+        const maxScale = 2;
+        const minScale = 0.5;
+        
+        zoomInBtn.addEventListener('click', function() {
+            if (currentScale < maxScale) {
+                currentScale += scaleStep;
+                qrisImg.style.transform = `scale(${currentScale})`;
+            }
+        });
+        
+        zoomOutBtn.addEventListener('click', function() {
+            if (currentScale > minScale) {
+                currentScale -= scaleStep;
+                qrisImg.style.transform = `scale(${currentScale})`;
+            }
+        });
+        
+        resetZoomBtn.addEventListener('click', function() {
+            currentScale = 1;
+            qrisImg.style.transform = `scale(${currentScale})`;
+        });
+        
+        // Gallery functionality
+        const galleryBtn = document.getElementById('gallery-btn');
+        const gallery = document.getElementById('gallery');
+        
+        galleryBtn.addEventListener('click', function() {
+            gallery.classList.toggle('active');
+            galleryBtn.textContent = gallery.classList.contains('active') ? 'Hide QR Gallery' : 'Show QR Gallery';
+        });
+        
+        // Modal functionality
+        const modal = document.getElementById('image-modal');
+        const modalImg = document.getElementById('modal-image');
+        const closeModal = document.querySelector('.close-modal');
+        
+        // Open modal when clicking on QRIS or gallery items
+        qrisImg.addEventListener('click', function() {
+            modal.style.display = 'flex';
+            modalImg.src = this.src;
+        });
+        
+        const galleryItems = document.querySelectorAll('.gallery-item img');
+        galleryItems.forEach(item => {
+            item.addEventListener('click', function() {
+                modal.style.display = 'flex';
+                modalImg.src = this.src;
+            });
+        });
+        
+        // Close modal
+        closeModal.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside the image
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        // Copy to clipboard functionality
+        const copyButtons = document.querySelectorAll('.copy-btn');
+        const notification = document.getElementById('notification');
+        
+        copyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const textToCopy = document.getElementById(targetId).textContent;
+                
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    // Show notification
+                    notification.classList.add('show');
+                    
+                    // Hide notification after 2 seconds
+                    setTimeout(() => {
+                        notification.classList.remove('show');
+                    }, 2000);
+                });
+            });
+        });
+        
+        // Hover effects for payment methods
+        const paymentMethods = document.querySelectorAll('.payment-method');
+        
+        paymentMethods.forEach(method => {
+            method.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateX(5px)';
+                this.style.borderLeft = '5px solid #ff0000';
+            });
+            
+            method.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.borderLeft = '5px solid transparent';
+            });
+        });
+    </script>
+</body>
+</html>
